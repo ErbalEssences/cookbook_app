@@ -1,12 +1,16 @@
 class Api::RecipesController < ApplicationController
   def index
-    @recipes = Recipe.all
-    search_term = params[:search]
-    if search_term
-      @recipes = @recipes.where("title iLIKE ?", "%#{search_term}%")
+    if current_user
+      @recipes = current_user.recipes
+      search_term = params[:search]
+      if search_term
+        @recipes = @recipes.where("title iLIKE ?", "%#{search_term}%")
+      end
+      
+      render 'index.json.jbuilder'
+    else
+      render json: []
     end
-    
-    render 'index.json.jbuilder'
 
 
   end
@@ -14,11 +18,10 @@ class Api::RecipesController < ApplicationController
   def create
     @recipes = Recipe.new(
                           title: params[:title],
-                          chef: params[:chef],
                           prep_time: params[:prep_time],
                           ingredients: params[:ingredients],
                           directions: params[:directions],
-                          image_url: params[:image_url]
+                          user_id: current_user.id
                           )
     @recipes.save
     render 'show.json.jbuilder'
@@ -32,11 +35,11 @@ class Api::RecipesController < ApplicationController
   def patch
     @recipe = Recipe.find(params[:id])
     @recipe.title = params[:title] || @recipe.title
-    @recipe.chef = params[:chef] || @recipe.chef
     @recipe.prep_time = params[:prep_time] || @recipe.prep_time
     @recipe.ingredients = params[:ingredients] || @recipe.ingredients
     @recipe.directions = params[:directions] || @recipe.directions
     @recipe.image_url = params[:image_url] || @recipe.image_url
+    @recipe.user_id = current_user.id
     @recipe.save
     render 'show.json.jbuilder'
   end
